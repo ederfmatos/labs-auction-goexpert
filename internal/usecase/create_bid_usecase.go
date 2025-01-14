@@ -1,9 +1,9 @@
-package bid_usecase
+package usecase
 
 import (
 	"context"
 	"fullcycle-auction_go/configuration/logger"
-	"fullcycle-auction_go/internal/entity/bid_entity"
+	"fullcycle-auction_go/internal/entity"
 	"fullcycle-auction_go/internal/internal_error"
 	"os"
 	"strconv"
@@ -25,15 +25,15 @@ type BidOutputDTO struct {
 }
 
 type BidUseCase struct {
-	BidRepository bid_entity.BidEntityRepository
+	BidRepository entity.BidEntityRepository
 
 	timer               *time.Timer
 	maxBatchSize        int
 	batchInsertInterval time.Duration
-	bidChannel          chan bid_entity.Bid
+	bidChannel          chan entity.Bid
 }
 
-func NewBidUseCase(bidRepository bid_entity.BidEntityRepository) BidUseCaseInterface {
+func NewBidUseCase(bidRepository entity.BidEntityRepository) BidUseCaseInterface {
 	maxSizeInterval := getMaxBatchSizeInterval()
 	maxBatchSize := getMaxBatchSize()
 
@@ -42,7 +42,7 @@ func NewBidUseCase(bidRepository bid_entity.BidEntityRepository) BidUseCaseInter
 		maxBatchSize:        maxBatchSize,
 		batchInsertInterval: maxSizeInterval,
 		timer:               time.NewTimer(maxSizeInterval),
-		bidChannel:          make(chan bid_entity.Bid, maxBatchSize),
+		bidChannel:          make(chan entity.Bid, maxBatchSize),
 	}
 
 	bidUseCase.triggerCreateRoutine(context.Background())
@@ -50,7 +50,7 @@ func NewBidUseCase(bidRepository bid_entity.BidEntityRepository) BidUseCaseInter
 	return bidUseCase
 }
 
-var bidBatch []bid_entity.Bid
+var bidBatch []entity.Bid
 
 type BidUseCaseInterface interface {
 	CreateBid(
@@ -105,7 +105,7 @@ func (bu *BidUseCase) CreateBid(
 	ctx context.Context,
 	bidInputDTO BidInputDTO) *internal_error.InternalError {
 
-	bidEntity, err := bid_entity.CreateBid(bidInputDTO.UserId, bidInputDTO.AuctionId, bidInputDTO.Amount)
+	bidEntity, err := entity.CreateBid(bidInputDTO.UserId, bidInputDTO.AuctionId, bidInputDTO.Amount)
 	if err != nil {
 		return err
 	}

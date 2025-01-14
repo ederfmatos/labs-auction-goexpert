@@ -1,19 +1,19 @@
-package user_usecase
+package usecase
 
 import (
 	"context"
-	"fullcycle-auction_go/internal/entity/user_entity"
+	"fullcycle-auction_go/internal/entity"
 	"fullcycle-auction_go/internal/internal_error"
 )
 
-func NewUserUseCase(userRepository user_entity.UserRepositoryInterface) UserUseCaseInterface {
+func NewUserUseCase(userRepository entity.UserRepositoryInterface) UserUseCaseInterface {
 	return &UserUseCase{
 		userRepository,
 	}
 }
 
 type UserUseCase struct {
-	UserRepository user_entity.UserRepositoryInterface
+	UserRepository entity.UserRepositoryInterface
 }
 
 type UserOutputDTO struct {

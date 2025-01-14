@@ -1,11 +1,10 @@
-package auction_usecase
+package usecase
 
 import (
 	"context"
 	"fullcycle-auction_go/configuration/logger"
-	"fullcycle-auction_go/internal/entity/auction_entity"
+	"fullcycle-auction_go/internal/entity"
 	"fullcycle-auction_go/internal/internal_error"
-	"fullcycle-auction_go/internal/usecase/bid_usecase"
 )
 
 func (au *AuctionUseCase) FindAuctionById(
@@ -31,7 +30,7 @@ func (au *AuctionUseCase) FindAuctions(
 	status AuctionStatus,
 	category, productName string) ([]AuctionOutputDTO, *internal_error.InternalError) {
 	auctionEntities, err := au.auctionRepositoryInterface.FindAuctions(
-		ctx, auction_entity.AuctionStatus(status), category, productName)
+		ctx, entity.AuctionStatus(status), category, productName)
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +78,7 @@ func (au *AuctionUseCase) FindWinningBidByAuctionId(
 		}, nil
 	}
 
-	bidOutputDTO := &bid_usecase.BidOutputDTO{
+	bidOutputDTO := &BidOutputDTO{
 		Id:        bidWinning.Id,
 		UserId:    bidWinning.UserId,
 		AuctionId: bidWinning.AuctionId,

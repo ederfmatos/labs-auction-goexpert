@@ -1,4 +1,4 @@
-package bid_usecase
+package usecase
 
 import (
 	"context"

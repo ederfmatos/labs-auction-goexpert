@@ -1,11 +1,9 @@
-package auction_usecase
+package usecase
 
 import (
 	"context"
-	"fullcycle-auction_go/internal/entity/auction_entity"
-	"fullcycle-auction_go/internal/entity/bid_entity"
+	"fullcycle-auction_go/internal/entity"
 	"fullcycle-auction_go/internal/internal_error"
-	"fullcycle-auction_go/internal/usecase/bid_usecase"
 	"time"
 )
 
@@ -27,13 +25,13 @@ type AuctionOutputDTO struct {
 }
 
 type WinningInfoOutputDTO struct {
-	Auction AuctionOutputDTO          `json:"auction"`
-	Bid     *bid_usecase.BidOutputDTO `json:"bid,omitempty"`
+	Auction AuctionOutputDTO `json:"auction"`
+	Bid     *BidOutputDTO    `json:"bid,omitempty"`
 }
 
 func NewAuctionUseCase(
-	auctionRepositoryInterface auction_entity.AuctionRepositoryInterface,
-	bidRepositoryInterface bid_entity.BidEntityRepository) AuctionUseCaseInterface {
+	auctionRepositoryInterface entity.AuctionRepositoryInterface,
+	bidRepositoryInterface entity.BidEntityRepository) AuctionUseCaseInterface {
 	return &AuctionUseCase{
 		auctionRepositoryInterface: auctionRepositoryInterface,
 		bidRepositoryInterface:     bidRepositoryInterface,
@@ -62,18 +60,18 @@ type ProductCondition int64
 type AuctionStatus int64
 
 type AuctionUseCase struct {
-	auctionRepositoryInterface auction_entity.AuctionRepositoryInterface
-	bidRepositoryInterface     bid_entity.BidEntityRepository
+	auctionRepositoryInterface entity.AuctionRepositoryInterface
+	bidRepositoryInterface     entity.BidEntityRepository
 }
 
 func (au *AuctionUseCase) CreateAuction(
 	ctx context.Context,
 	auctionInput AuctionInputDTO) *internal_error.InternalError {
-	auction, err := auction_entity.CreateAuction(
+	auction, err := entity.CreateAuction(
 		auctionInput.ProductName,
 		auctionInput.Category,
 		auctionInput.Description,
-		auction_entity.ProductCondition(auctionInput.Condition))
+		entity.ProductCondition(auctionInput.Condition))
 	if err != nil {
 		return err
 	}

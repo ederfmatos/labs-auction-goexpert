@@ -1,19 +1,19 @@
-package user_controller
+package api
 
 import (
 	"context"
 	"fullcycle-auction_go/configuration/rest_err"
-	"fullcycle-auction_go/internal/usecase/user_usecase"
+	"fullcycle-auction_go/internal/usecase"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"net/http"
 )
 
 type UserController struct {
-	userUseCase user_usecase.UserUseCaseInterface
+	userUseCase usecase.UserUseCaseInterface
 }
 
-func NewUserController(userUseCase user_usecase.UserUseCaseInterface) *UserController {
+func NewUserController(userUseCase usecase.UserUseCaseInterface) *UserController {
 	return &UserController{
 		userUseCase: userUseCase,
 	}

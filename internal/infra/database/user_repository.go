@@ -1,11 +1,11 @@
-package user
+package database
 
 import (
 	"context"
 	"errors"
 	"fmt"
 	"fullcycle-auction_go/configuration/logger"
-	"fullcycle-auction_go/internal/entity/user_entity"
+	"fullcycle-auction_go/internal/entity"
 	"fullcycle-auction_go/internal/internal_error"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -27,7 +27,7 @@ func NewUserRepository(database *mongo.Database) *UserRepository {
 }
 
 func (ur *UserRepository) FindUserById(
-	ctx context.Context, userId string) (*user_entity.User, *internal_error.InternalError) {
+	ctx context.Context, userId string) (*entity.User, *internal_error.InternalError) {
 	filter := bson.M{"_id": userId}
 
 	var userEntityMongo UserEntityMongo
@@ -43,7 +43,7 @@ func (ur *UserRepository) FindUserById(
 		return nil, internal_error.NewInternalServerError("Error trying to find user by userId")
 	}
 
-	userEntity := &user_entity.User{
+	userEntity := &entity.User{
 		Id:   userEntityMongo.Id,
 		Name: userEntityMongo.Name,
 	}

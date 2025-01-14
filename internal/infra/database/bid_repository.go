@@ -1,12 +1,13 @@
-package bid
+package database
 
 import (
 	"context"
+	"fmt"
 	"fullcycle-auction_go/configuration/logger"
-	"fullcycle-auction_go/internal/entity/auction_entity"
-	"fullcycle-auction_go/internal/entity/bid_entity"
-	"fullcycle-auction_go/internal/infra/database/auction"
+	"fullcycle-auction_go/internal/entity"
 	"fullcycle-auction_go/internal/internal_error"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"os"
 	"sync"
 	"time"
@@ -24,18 +25,18 @@ type BidEntityMongo struct {
 
 type BidRepository struct {
 	Collection            *mongo.Collection
-	AuctionRepository     *auction.AuctionRepository
+	AuctionRepository     *AuctionRepository
 	auctionInterval       time.Duration
-	auctionStatusMap      map[string]auction_entity.AuctionStatus
+	auctionStatusMap      map[string]entity.AuctionStatus
 	auctionEndTimeMap     map[string]time.Time
 	auctionStatusMapMutex *sync.Mutex
 	auctionEndTimeMutex   *sync.Mutex
 }
 
-func NewBidRepository(database *mongo.Database, auctionRepository *auction.AuctionRepository) *BidRepository {
+func NewBidRepository(database *mongo.Database, auctionRepository *AuctionRepository) *BidRepository {
 	return &BidRepository{
 		auctionInterval:       getAuctionInterval(),
-		auctionStatusMap:      make(map[string]auction_entity.AuctionStatus),
+		auctionStatusMap:      make(map[string]entity.AuctionStatus),
 		auctionEndTimeMap:     make(map[string]time.Time),
 		auctionStatusMapMutex: &sync.Mutex{},
 		auctionEndTimeMutex:   &sync.Mutex{},
@@ -46,11 +47,11 @@ func NewBidRepository(database *mongo.Database, auctionRepository *auction.Aucti
 
 func (bd *BidRepository) CreateBid(
 	ctx context.Context,
-	bidEntities []bid_entity.Bid) *internal_error.InternalError {
+	bidEntities []entity.Bid) *internal_error.InternalError {
 	var wg sync.WaitGroup
 	for _, bid := range bidEntities {
 		wg.Add(1)
-		go func(bidValue bid_entity.Bid) {
+		go func(bidValue entity.Bid) {
 			defer wg.Done()
 
 			bd.auctionStatusMapMutex.Lock()
@@ -71,7 +72,7 @@ func (bd *BidRepository) CreateBid(
 
 			if okEndTime && okStatus {
 				now := time.Now()
-				if auctionStatus == auction_entity.Completed || now.After(auctionEndTime) {
+				if auctionStatus == entity.Completed || now.After(auctionEndTime) {
 					return
 				}
 
@@ -88,7 +89,7 @@ func (bd *BidRepository) CreateBid(
 				logger.Error("Error trying to find auction by id", err)
 				return
 			}
-			if auctionEntity.Status == auction_entity.Completed {
+			if auctionEntity.Status == entity.Completed {
 				return
 			}
 
@@ -108,6 +109,60 @@ func (bd *BidRepository) CreateBid(
 	}
 	wg.Wait()
 	return nil
+}
+
+func (bd *BidRepository) FindBidByAuctionId(
+	ctx context.Context, auctionId string) ([]entity.Bid, *internal_error.InternalError) {
+	filter := bson.M{"auctionId": auctionId}
+
+	cursor, err := bd.Collection.Find(ctx, filter)
+	if err != nil {
+		logger.Error(
+			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId), err)
+		return nil, internal_error.NewInternalServerError(
+			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId))
+	}
+
+	var bidEntitiesMongo []BidEntityMongo
+	if err := cursor.All(ctx, &bidEntitiesMongo); err != nil {
+		logger.Error(
+			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId), err)
+		return nil, internal_error.NewInternalServerError(
+			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId))
+	}
+
+	var bidEntities []entity.Bid
+	for _, bidEntityMongo := range bidEntitiesMongo {
+		bidEntities = append(bidEntities, entity.Bid{
+			Id:        bidEntityMongo.Id,
+			UserId:    bidEntityMongo.UserId,
+			AuctionId: bidEntityMongo.AuctionId,
+			Amount:    bidEntityMongo.Amount,
+			Timestamp: time.Unix(bidEntityMongo.Timestamp, 0),
+		})
+	}
+
+	return bidEntities, nil
+}
+
+func (bd *BidRepository) FindWinningBidByAuctionId(
+	ctx context.Context, auctionId string) (*entity.Bid, *internal_error.InternalError) {
+	filter := bson.M{"auction_id": auctionId}
+
+	var bidEntityMongo BidEntityMongo
+	opts := options.FindOne().SetSort(bson.D{{"amount", -1}})
+	if err := bd.Collection.FindOne(ctx, filter, opts).Decode(&bidEntityMongo); err != nil {
+		logger.Error("Error trying to find the auction winner", err)
+		return nil, internal_error.NewInternalServerError("Error trying to find the auction winner")
+	}
+
+	return &entity.Bid{
+		Id:        bidEntityMongo.Id,
+		UserId:    bidEntityMongo.UserId,
+		AuctionId: bidEntityMongo.AuctionId,
+		Amount:    bidEntityMongo.Amount,
+		Timestamp: time.Unix(bidEntityMongo.Timestamp, 0),
+	}, nil
 }
 
 func getAuctionInterval() time.Duration {

@@ -1,4 +1,4 @@
-package bid_entity
+package entity
 
 import (
 	"context"

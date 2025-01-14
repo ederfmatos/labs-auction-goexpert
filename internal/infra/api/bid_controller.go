@@ -1,12 +1,44 @@
-package bid_controller
+package api
 
 import (
 	"context"
 	"fullcycle-auction_go/configuration/rest_err"
+	"fullcycle-auction_go/internal/usecase"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"net/http"
 )
+
+type BidController struct {
+	bidUseCase usecase.BidUseCaseInterface
+}
+
+func NewBidController(bidUseCase usecase.BidUseCaseInterface) *BidController {
+	return &BidController{
+		bidUseCase: bidUseCase,
+	}
+}
+
+func (u *BidController) CreateBid(c *gin.Context) {
+	var bidInputDTO usecase.BidInputDTO
+
+	if err := c.ShouldBindJSON(&bidInputDTO); err != nil {
+		restErr := ValidateErr(err)
+
+		c.JSON(restErr.Code, restErr)
+		return
+	}
+
+	err := u.bidUseCase.CreateBid(context.Background(), bidInputDTO)
+	if err != nil {
+		restErr := rest_err.ConvertError(err)
+
+		c.JSON(restErr.Code, restErr)
+		return
+	}
+
+	c.Status(http.StatusCreated)
+}
 
 func (u *BidController) FindBidByAuctionId(c *gin.Context) {
 	auctionId := c.Param("auctionId")

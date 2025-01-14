@@ -1,4 +1,4 @@
-package auction_entity
+package entity
 
 import (
 	"context"
