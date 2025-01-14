@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"fullcycle-auction_go/internal/entity"
-	"fullcycle-auction_go/internal/internal_error"
 	"time"
 )
 
@@ -41,19 +40,19 @@ func NewAuctionUseCase(
 type AuctionUseCaseInterface interface {
 	CreateAuction(
 		ctx context.Context,
-		auctionInput AuctionInputDTO) *internal_error.InternalError
+		auctionInput AuctionInputDTO) error
 
 	FindAuctionById(
-		ctx context.Context, id string) (*AuctionOutputDTO, *internal_error.InternalError)
+		ctx context.Context, id string) (*AuctionOutputDTO, error)
 
 	FindAuctions(
 		ctx context.Context,
 		status AuctionStatus,
-		category, productName string) ([]AuctionOutputDTO, *internal_error.InternalError)
+		category, productName string) ([]AuctionOutputDTO, error)
 
 	FindWinningBidByAuctionId(
 		ctx context.Context,
-		auctionId string) (*WinningInfoOutputDTO, *internal_error.InternalError)
+		auctionId string) (*WinningInfoOutputDTO, error)
 }
 
 type ProductCondition int64
@@ -66,7 +65,7 @@ type AuctionUseCase struct {
 
 func (au *AuctionUseCase) CreateAuction(
 	ctx context.Context,
-	auctionInput AuctionInputDTO) *internal_error.InternalError {
+	auctionInput AuctionInputDTO) error {
 	auction, err := entity.CreateAuction(
 		auctionInput.ProductName,
 		auctionInput.Category,

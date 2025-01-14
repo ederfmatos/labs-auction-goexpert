@@ -4,7 +4,6 @@ import (
 	"context"
 	"fullcycle-auction_go/configuration/logger"
 	"fullcycle-auction_go/internal/entity"
-	"fullcycle-auction_go/internal/internal_error"
 	"os"
 	"strconv"
 	"time"
@@ -55,13 +54,13 @@ var bidBatch []entity.Bid
 type BidUseCaseInterface interface {
 	CreateBid(
 		ctx context.Context,
-		bidInputDTO BidInputDTO) *internal_error.InternalError
+		bidInputDTO BidInputDTO) error
 
 	FindWinningBidByAuctionId(
-		ctx context.Context, auctionId string) (*BidOutputDTO, *internal_error.InternalError)
+		ctx context.Context, auctionId string) (*BidOutputDTO, error)
 
 	FindBidByAuctionId(
-		ctx context.Context, auctionId string) ([]BidOutputDTO, *internal_error.InternalError)
+		ctx context.Context, auctionId string) ([]BidOutputDTO, error)
 }
 
 func (bu *BidUseCase) triggerCreateRoutine(ctx context.Context) {
@@ -103,7 +102,7 @@ func (bu *BidUseCase) triggerCreateRoutine(ctx context.Context) {
 
 func (bu *BidUseCase) CreateBid(
 	ctx context.Context,
-	bidInputDTO BidInputDTO) *internal_error.InternalError {
+	bidInputDTO BidInputDTO) error {
 
 	bidEntity, err := entity.CreateBid(bidInputDTO.UserId, bidInputDTO.AuctionId, bidInputDTO.Amount)
 	if err != nil {

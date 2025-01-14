@@ -9,7 +9,7 @@ import (
 
 func CreateAuction(
 	productName, category, description string,
-	condition ProductCondition) (*Auction, *internal_error.InternalError) {
+	condition ProductCondition) (*Auction, error) {
 	auction := &Auction{
 		Id:          uuid.New().String(),
 		ProductName: productName,
@@ -27,7 +27,7 @@ func CreateAuction(
 	return auction, nil
 }
 
-func (au *Auction) Validate() *internal_error.InternalError {
+func (au *Auction) Validate() error {
 	if len(au.ProductName) <= 1 ||
 		len(au.Category) <= 2 ||
 		len(au.Description) <= 10 && (au.Condition != New &&
@@ -66,13 +66,13 @@ const (
 type AuctionRepositoryInterface interface {
 	CreateAuction(
 		ctx context.Context,
-		auctionEntity *Auction) *internal_error.InternalError
+		auctionEntity *Auction) error
 
 	FindAuctions(
 		ctx context.Context,
 		status AuctionStatus,
-		category, productName string) ([]Auction, *internal_error.InternalError)
+		category, productName string) ([]Auction, error)
 
 	FindAuctionById(
-		ctx context.Context, id string) (*Auction, *internal_error.InternalError)
+		ctx context.Context, id string) (*Auction, error)
 }

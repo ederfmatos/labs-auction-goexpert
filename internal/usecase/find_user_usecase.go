@@ -3,7 +3,6 @@ package usecase
 import (
 	"context"
 	"fullcycle-auction_go/internal/entity"
-	"fullcycle-auction_go/internal/internal_error"
 )
 
 func NewUserUseCase(userRepository entity.UserRepositoryInterface) UserUseCaseInterface {
@@ -24,11 +23,11 @@ type UserOutputDTO struct {
 type UserUseCaseInterface interface {
 	FindUserById(
 		ctx context.Context,
-		id string) (*UserOutputDTO, *internal_error.InternalError)
+		id string) (*UserOutputDTO, error)
 }
 
 func (u *UserUseCase) FindUserById(
-	ctx context.Context, id string) (*UserOutputDTO, *internal_error.InternalError) {
+	ctx context.Context, id string) (*UserOutputDTO, error) {
 	userEntity, err := u.UserRepository.FindUserById(ctx, id)
 	if err != nil {
 		return nil, err

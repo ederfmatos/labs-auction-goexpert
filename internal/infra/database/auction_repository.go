@@ -34,7 +34,7 @@ func NewAuctionRepository(database *mongo.Database) *AuctionRepository {
 
 func (ar *AuctionRepository) CreateAuction(
 	ctx context.Context,
-	auctionEntity *entity.Auction) *internal_error.InternalError {
+	auctionEntity *entity.Auction) error {
 	auctionEntityMongo := &AuctionEntityMongo{
 		Id:          auctionEntity.Id,
 		ProductName: auctionEntity.ProductName,
@@ -54,7 +54,7 @@ func (ar *AuctionRepository) CreateAuction(
 }
 
 func (ar *AuctionRepository) FindAuctionById(
-	ctx context.Context, id string) (*entity.Auction, *internal_error.InternalError) {
+	ctx context.Context, id string) (*entity.Auction, error) {
 	filter := bson.M{"_id": id}
 
 	var auctionEntityMongo AuctionEntityMongo
@@ -78,7 +78,7 @@ func (ar *AuctionRepository) FindAuctions(
 	ctx context.Context,
 	status entity.AuctionStatus,
 	category string,
-	productName string) ([]entity.Auction, *internal_error.InternalError) {
+	productName string) ([]entity.Auction, error) {
 	filter := bson.M{}
 
 	if status != 0 {

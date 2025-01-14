@@ -47,7 +47,7 @@ func NewBidRepository(database *mongo.Database, auctionRepository *AuctionReposi
 
 func (bd *BidRepository) CreateBid(
 	ctx context.Context,
-	bidEntities []entity.Bid) *internal_error.InternalError {
+	bidEntities []entity.Bid) error {
 	var wg sync.WaitGroup
 	for _, bid := range bidEntities {
 		wg.Add(1)
@@ -112,7 +112,7 @@ func (bd *BidRepository) CreateBid(
 }
 
 func (bd *BidRepository) FindBidByAuctionId(
-	ctx context.Context, auctionId string) ([]entity.Bid, *internal_error.InternalError) {
+	ctx context.Context, auctionId string) ([]entity.Bid, error) {
 	filter := bson.M{"auctionId": auctionId}
 
 	cursor, err := bd.Collection.Find(ctx, filter)
@@ -146,7 +146,7 @@ func (bd *BidRepository) FindBidByAuctionId(
 }
 
 func (bd *BidRepository) FindWinningBidByAuctionId(
-	ctx context.Context, auctionId string) (*entity.Bid, *internal_error.InternalError) {
+	ctx context.Context, auctionId string) (*entity.Bid, error) {
 	filter := bson.M{"auction_id": auctionId}
 
 	var bidEntityMongo BidEntityMongo

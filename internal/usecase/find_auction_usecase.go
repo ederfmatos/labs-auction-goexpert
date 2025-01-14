@@ -4,11 +4,10 @@ import (
 	"context"
 	"fullcycle-auction_go/configuration/logger"
 	"fullcycle-auction_go/internal/entity"
-	"fullcycle-auction_go/internal/internal_error"
 )
 
 func (au *AuctionUseCase) FindAuctionById(
-	ctx context.Context, id string) (*AuctionOutputDTO, *internal_error.InternalError) {
+	ctx context.Context, id string) (*AuctionOutputDTO, error) {
 	auctionEntity, err := au.auctionRepositoryInterface.FindAuctionById(ctx, id)
 	if err != nil {
 		return nil, err
@@ -28,7 +27,7 @@ func (au *AuctionUseCase) FindAuctionById(
 func (au *AuctionUseCase) FindAuctions(
 	ctx context.Context,
 	status AuctionStatus,
-	category, productName string) ([]AuctionOutputDTO, *internal_error.InternalError) {
+	category, productName string) ([]AuctionOutputDTO, error) {
 	auctionEntities, err := au.auctionRepositoryInterface.FindAuctions(
 		ctx, entity.AuctionStatus(status), category, productName)
 	if err != nil {
@@ -53,7 +52,7 @@ func (au *AuctionUseCase) FindAuctions(
 
 func (au *AuctionUseCase) FindWinningBidByAuctionId(
 	ctx context.Context,
-	auctionId string) (*WinningInfoOutputDTO, *internal_error.InternalError) {
+	auctionId string) (*WinningInfoOutputDTO, error) {
 	auction, err := au.auctionRepositoryInterface.FindAuctionById(ctx, auctionId)
 	if err != nil {
 		return nil, err

@@ -15,7 +15,7 @@ type Bid struct {
 	Timestamp time.Time
 }
 
-func CreateBid(userId, auctionId string, amount float64) (*Bid, *internal_error.InternalError) {
+func CreateBid(userId, auctionId string, amount float64) (*Bid, error) {
 	bid := &Bid{
 		Id:        uuid.New().String(),
 		UserId:    userId,
@@ -31,7 +31,7 @@ func CreateBid(userId, auctionId string, amount float64) (*Bid, *internal_error.
 	return bid, nil
 }
 
-func (b *Bid) Validate() *internal_error.InternalError {
+func (b *Bid) Validate() error {
 	if err := uuid.Validate(b.UserId); err != nil {
 		return internal_error.NewBadRequestError("UserId is not a valid id")
 	} else if err := uuid.Validate(b.AuctionId); err != nil {
@@ -46,11 +46,11 @@ func (b *Bid) Validate() *internal_error.InternalError {
 type BidEntityRepository interface {
 	CreateBid(
 		ctx context.Context,
-		bidEntities []Bid) *internal_error.InternalError
+		bidEntities []Bid) error
 
 	FindBidByAuctionId(
-		ctx context.Context, auctionId string) ([]Bid, *internal_error.InternalError)
+		ctx context.Context, auctionId string) ([]Bid, error)
 
 	FindWinningBidByAuctionId(
-		ctx context.Context, auctionId string) (*Bid, *internal_error.InternalError)
+		ctx context.Context, auctionId string) (*Bid, error)
 }
