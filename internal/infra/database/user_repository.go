@@ -11,14 +11,16 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type UserEntityMongo struct {
-	Id   string `bson:"_id"`
-	Name string `bson:"name"`
-}
+type (
+	UserMongo struct {
+		Id   string `bson:"_id"`
+		Name string `bson:"name"`
+	}
 
-type UserRepository struct {
-	Collection *mongo.Collection
-}
+	UserRepository struct {
+		Collection *mongo.Collection
+	}
+)
 
 func NewUserRepository(database *mongo.Database) *UserRepository {
 	return &UserRepository{
@@ -26,12 +28,11 @@ func NewUserRepository(database *mongo.Database) *UserRepository {
 	}
 }
 
-func (ur *UserRepository) FindUserById(
-	ctx context.Context, userId string) (*entity.User, error) {
+func (ur *UserRepository) FindUserById(ctx context.Context, userId string) (*entity.User, error) {
 	filter := bson.M{"_id": userId}
 
-	var userEntityMongo UserEntityMongo
-	err := ur.Collection.FindOne(ctx, filter).Decode(&userEntityMongo)
+	var userMongo UserMongo
+	err := ur.Collection.FindOne(ctx, filter).Decode(&userMongo)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			logger.Error(fmt.Sprintf("User not found with this id = %d", userId), err)
@@ -43,10 +44,10 @@ func (ur *UserRepository) FindUserById(
 		return nil, internal_error.NewInternalServerError("Error trying to find user by userId")
 	}
 
-	userEntity := &entity.User{
-		Id:   userEntityMongo.Id,
-		Name: userEntityMongo.Name,
+	user := &entity.User{
+		Id:   userMongo.Id,
+		Name: userMongo.Name,
 	}
 
-	return userEntity, nil
+	return user, nil
 }

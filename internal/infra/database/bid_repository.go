@@ -15,23 +15,25 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type BidEntityMongo struct {
-	Id        string  `bson:"_id"`
-	UserId    string  `bson:"user_id"`
-	AuctionId string  `bson:"auction_id"`
-	Amount    float64 `bson:"amount"`
-	Timestamp int64   `bson:"timestamp"`
-}
+type (
+	BidMongo struct {
+		Id        string  `bson:"_id"`
+		UserId    string  `bson:"user_id"`
+		AuctionId string  `bson:"auction_id"`
+		Amount    float64 `bson:"amount"`
+		Timestamp int64   `bson:"timestamp"`
+	}
 
-type BidRepository struct {
-	Collection            *mongo.Collection
-	AuctionRepository     *AuctionRepository
-	auctionInterval       time.Duration
-	auctionStatusMap      map[string]entity.AuctionStatus
-	auctionEndTimeMap     map[string]time.Time
-	auctionStatusMapMutex *sync.Mutex
-	auctionEndTimeMutex   *sync.Mutex
-}
+	BidRepository struct {
+		Collection            *mongo.Collection
+		AuctionRepository     *AuctionRepository
+		auctionInterval       time.Duration
+		auctionStatusMap      map[string]entity.AuctionStatus
+		auctionEndTimeMap     map[string]time.Time
+		auctionStatusMapMutex *sync.Mutex
+		auctionEndTimeMutex   *sync.Mutex
+	}
+)
 
 func NewBidRepository(database *mongo.Database, auctionRepository *AuctionRepository) *BidRepository {
 	return &BidRepository{
@@ -62,7 +64,7 @@ func (bd *BidRepository) CreateBid(
 			auctionEndTime, okEndTime := bd.auctionEndTimeMap[bidValue.AuctionId]
 			bd.auctionEndTimeMutex.Unlock()
 
-			bidEntityMongo := &BidEntityMongo{
+			bidMongo := &BidMongo{
 				Id:        bidValue.Id,
 				UserId:    bidValue.UserId,
 				AuctionId: bidValue.AuctionId,
@@ -76,7 +78,7 @@ func (bd *BidRepository) CreateBid(
 					return
 				}
 
-				if _, err := bd.Collection.InsertOne(ctx, bidEntityMongo); err != nil {
+				if _, err := bd.Collection.InsertOne(ctx, bidMongo); err != nil {
 					logger.Error("Error trying to insert bid", err)
 					return
 				}
@@ -84,24 +86,24 @@ func (bd *BidRepository) CreateBid(
 				return
 			}
 
-			auctionEntity, err := bd.AuctionRepository.FindAuctionById(ctx, bidValue.AuctionId)
+			auction, err := bd.AuctionRepository.FindAuctionById(ctx, bidValue.AuctionId)
 			if err != nil {
 				logger.Error("Error trying to find auction by id", err)
 				return
 			}
-			if auctionEntity.Status == entity.Completed {
+			if auction.Status == entity.Completed {
 				return
 			}
 
 			bd.auctionStatusMapMutex.Lock()
-			bd.auctionStatusMap[bidValue.AuctionId] = auctionEntity.Status
+			bd.auctionStatusMap[bidValue.AuctionId] = auction.Status
 			bd.auctionStatusMapMutex.Unlock()
 
 			bd.auctionEndTimeMutex.Lock()
-			bd.auctionEndTimeMap[bidValue.AuctionId] = auctionEntity.Timestamp.Add(bd.auctionInterval)
+			bd.auctionEndTimeMap[bidValue.AuctionId] = auction.Timestamp.Add(bd.auctionInterval)
 			bd.auctionEndTimeMutex.Unlock()
 
-			if _, err := bd.Collection.InsertOne(ctx, bidEntityMongo); err != nil {
+			if _, err := bd.Collection.InsertOne(ctx, bidMongo); err != nil {
 				logger.Error("Error trying to insert bid", err)
 				return
 			}
@@ -117,28 +119,24 @@ func (bd *BidRepository) FindBidByAuctionId(
 
 	cursor, err := bd.Collection.Find(ctx, filter)
 	if err != nil {
-		logger.Error(
-			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId), err)
-		return nil, internal_error.NewInternalServerError(
-			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId))
+		logger.Error(fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId), err)
+		return nil, internal_error.NewInternalServerError(fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId))
 	}
 
-	var bidEntitiesMongo []BidEntityMongo
-	if err := cursor.All(ctx, &bidEntitiesMongo); err != nil {
-		logger.Error(
-			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId), err)
-		return nil, internal_error.NewInternalServerError(
-			fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId))
+	var bids []BidMongo
+	if err := cursor.All(ctx, &bids); err != nil {
+		logger.Error(fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId), err)
+		return nil, internal_error.NewInternalServerError(fmt.Sprintf("Error trying to find bids by auctionId %s", auctionId))
 	}
 
 	var bidEntities []entity.Bid
-	for _, bidEntityMongo := range bidEntitiesMongo {
+	for _, bidMongo := range bids {
 		bidEntities = append(bidEntities, entity.Bid{
-			Id:        bidEntityMongo.Id,
-			UserId:    bidEntityMongo.UserId,
-			AuctionId: bidEntityMongo.AuctionId,
-			Amount:    bidEntityMongo.Amount,
-			Timestamp: time.Unix(bidEntityMongo.Timestamp, 0),
+			Id:        bidMongo.Id,
+			UserId:    bidMongo.UserId,
+			AuctionId: bidMongo.AuctionId,
+			Amount:    bidMongo.Amount,
+			Timestamp: time.Unix(bidMongo.Timestamp, 0),
 		})
 	}
 
@@ -149,19 +147,19 @@ func (bd *BidRepository) FindWinningBidByAuctionId(
 	ctx context.Context, auctionId string) (*entity.Bid, error) {
 	filter := bson.M{"auction_id": auctionId}
 
-	var bidEntityMongo BidEntityMongo
+	var bidMongo BidMongo
 	opts := options.FindOne().SetSort(bson.D{{"amount", -1}})
-	if err := bd.Collection.FindOne(ctx, filter, opts).Decode(&bidEntityMongo); err != nil {
+	if err := bd.Collection.FindOne(ctx, filter, opts).Decode(&bidMongo); err != nil {
 		logger.Error("Error trying to find the auction winner", err)
 		return nil, internal_error.NewInternalServerError("Error trying to find the auction winner")
 	}
 
 	return &entity.Bid{
-		Id:        bidEntityMongo.Id,
-		UserId:    bidEntityMongo.UserId,
-		AuctionId: bidEntityMongo.AuctionId,
-		Amount:    bidEntityMongo.Amount,
-		Timestamp: time.Unix(bidEntityMongo.Timestamp, 0),
+		Id:        bidMongo.Id,
+		UserId:    bidMongo.UserId,
+		AuctionId: bidMongo.AuctionId,
+		Amount:    bidMongo.Amount,
+		Timestamp: time.Unix(bidMongo.Timestamp, 0),
 	}, nil
 }
 

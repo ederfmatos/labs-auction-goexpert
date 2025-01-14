@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fullcycle-auction_go/configuration/rest_err"
 	"fullcycle-auction_go/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -10,10 +9,10 @@ import (
 )
 
 type UserController struct {
-	userUseCase usecase.UserUseCaseInterface
+	userUseCase usecase.UserUseCase
 }
 
-func NewUserController(userUseCase usecase.UserUseCaseInterface) *UserController {
+func NewUserController(userUseCase usecase.UserUseCase) *UserController {
 	return &UserController{
 		userUseCase: userUseCase,
 	}
@@ -32,7 +31,7 @@ func (u *UserController) FindUserById(c *gin.Context) {
 		return
 	}
 
-	userData, err := u.userUseCase.FindUserById(context.Background(), userId)
+	userData, err := u.userUseCase.FindUserById(c.Request.Context(), userId)
 	if err != nil {
 		errRest := rest_err.ConvertError(err)
 		c.JSON(errRest.Code, errRest)

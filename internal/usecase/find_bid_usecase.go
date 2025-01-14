@@ -4,8 +4,7 @@ import (
 	"context"
 )
 
-func (bu *BidUseCase) FindBidByAuctionId(
-	ctx context.Context, auctionId string) ([]BidOutputDTO, error) {
+func (bu *bidUseCase) FindBidByAuctionId(ctx context.Context, auctionId string) ([]BidOutputDTO, error) {
 	bidList, err := bu.BidRepository.FindBidByAuctionId(ctx, auctionId)
 	if err != nil {
 		return nil, err
@@ -25,19 +24,19 @@ func (bu *BidUseCase) FindBidByAuctionId(
 	return bidOutputList, nil
 }
 
-func (bu *BidUseCase) FindWinningBidByAuctionId(
+func (bu *bidUseCase) FindWinningBidByAuctionId(
 	ctx context.Context, auctionId string) (*BidOutputDTO, error) {
-	bidEntity, err := bu.BidRepository.FindWinningBidByAuctionId(ctx, auctionId)
+	bid, err := bu.BidRepository.FindWinningBidByAuctionId(ctx, auctionId)
 	if err != nil {
 		return nil, err
 	}
 
 	bidOutput := &BidOutputDTO{
-		Id:        bidEntity.Id,
-		UserId:    bidEntity.UserId,
-		AuctionId: bidEntity.AuctionId,
-		Amount:    bidEntity.Amount,
-		Timestamp: bidEntity.Timestamp,
+		Id:        bid.Id,
+		UserId:    bid.UserId,
+		AuctionId: bid.AuctionId,
+		Amount:    bid.Amount,
+		Timestamp: bid.Timestamp,
 	}
 
 	return bidOutput, nil

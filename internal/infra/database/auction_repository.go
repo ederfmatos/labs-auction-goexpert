@@ -13,18 +13,21 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type AuctionEntityMongo struct {
-	Id          string                  `bson:"_id"`
-	ProductName string                  `bson:"product_name"`
-	Category    string                  `bson:"category"`
-	Description string                  `bson:"description"`
-	Condition   entity.ProductCondition `bson:"condition"`
-	Status      entity.AuctionStatus    `bson:"status"`
-	Timestamp   int64                   `bson:"timestamp"`
-}
-type AuctionRepository struct {
-	Collection *mongo.Collection
-}
+type (
+	AuctionMongo struct {
+		Id          string                  `bson:"_id"`
+		ProductName string                  `bson:"product_name"`
+		Category    string                  `bson:"category"`
+		Description string                  `bson:"description"`
+		Condition   entity.ProductCondition `bson:"condition"`
+		Status      entity.AuctionStatus    `bson:"status"`
+		Timestamp   int64                   `bson:"timestamp"`
+	}
+
+	AuctionRepository struct {
+		Collection *mongo.Collection
+	}
+)
 
 func NewAuctionRepository(database *mongo.Database) *AuctionRepository {
 	return &AuctionRepository{
@@ -32,19 +35,17 @@ func NewAuctionRepository(database *mongo.Database) *AuctionRepository {
 	}
 }
 
-func (ar *AuctionRepository) CreateAuction(
-	ctx context.Context,
-	auctionEntity *entity.Auction) error {
-	auctionEntityMongo := &AuctionEntityMongo{
-		Id:          auctionEntity.Id,
-		ProductName: auctionEntity.ProductName,
-		Category:    auctionEntity.Category,
-		Description: auctionEntity.Description,
-		Condition:   auctionEntity.Condition,
-		Status:      auctionEntity.Status,
-		Timestamp:   auctionEntity.Timestamp.Unix(),
+func (ar *AuctionRepository) CreateAuction(ctx context.Context, auction *entity.Auction) error {
+	auctionMongo := &AuctionMongo{
+		Id:          auction.Id,
+		ProductName: auction.ProductName,
+		Category:    auction.Category,
+		Description: auction.Description,
+		Condition:   auction.Condition,
+		Status:      auction.Status,
+		Timestamp:   auction.Timestamp.Unix(),
 	}
-	_, err := ar.Collection.InsertOne(ctx, auctionEntityMongo)
+	_, err := ar.Collection.InsertOne(ctx, auctionMongo)
 	if err != nil {
 		logger.Error("Error trying to insert auction", err)
 		return internal_error.NewInternalServerError("Error trying to insert auction")
@@ -57,20 +58,20 @@ func (ar *AuctionRepository) FindAuctionById(
 	ctx context.Context, id string) (*entity.Auction, error) {
 	filter := bson.M{"_id": id}
 
-	var auctionEntityMongo AuctionEntityMongo
-	if err := ar.Collection.FindOne(ctx, filter).Decode(&auctionEntityMongo); err != nil {
+	var auctionMongo AuctionMongo
+	if err := ar.Collection.FindOne(ctx, filter).Decode(&auctionMongo); err != nil {
 		logger.Error(fmt.Sprintf("Error trying to find auction by id = %s", id), err)
 		return nil, internal_error.NewInternalServerError("Error trying to find auction by id")
 	}
 
 	return &entity.Auction{
-		Id:          auctionEntityMongo.Id,
-		ProductName: auctionEntityMongo.ProductName,
-		Category:    auctionEntityMongo.Category,
-		Description: auctionEntityMongo.Description,
-		Condition:   auctionEntityMongo.Condition,
-		Status:      auctionEntityMongo.Status,
-		Timestamp:   time.Unix(auctionEntityMongo.Timestamp, 0),
+		Id:          auctionMongo.Id,
+		ProductName: auctionMongo.ProductName,
+		Category:    auctionMongo.Category,
+		Description: auctionMongo.Description,
+		Condition:   auctionMongo.Condition,
+		Status:      auctionMongo.Status,
+		Timestamp:   time.Unix(auctionMongo.Timestamp, 0),
 	}, nil
 }
 
@@ -100,15 +101,15 @@ func (ar *AuctionRepository) FindAuctions(
 	}
 	defer cursor.Close(ctx)
 
-	var auctionsMongo []AuctionEntityMongo
+	var auctionsMongo []AuctionMongo
 	if err := cursor.All(ctx, &auctionsMongo); err != nil {
 		logger.Error("Error decoding auctions", err)
 		return nil, internal_error.NewInternalServerError("Error decoding auctions")
 	}
 
-	var auctionsEntity []entity.Auction
+	var auctions []entity.Auction
 	for _, auction := range auctionsMongo {
-		auctionsEntity = append(auctionsEntity, entity.Auction{
+		auctions = append(auctions, entity.Auction{
 			Id:          auction.Id,
 			ProductName: auction.ProductName,
 			Category:    auction.Category,
@@ -119,5 +120,5 @@ func (ar *AuctionRepository) FindAuctions(
 		})
 	}
 
-	return auctionsEntity, nil
+	return auctions, nil
 }

@@ -1,6 +1,8 @@
 package rest_err
 
 import (
+	"errors"
+	"fullcycle-auction_go/internal/internal_error"
 	"net/http"
 )
 
@@ -20,7 +22,11 @@ func (r *RestErr) Error() string {
 	return r.Message
 }
 
-func ConvertError(internalError error) *RestErr {
+func ConvertError(err error) *RestErr {
+	var internalError *internal_error.InternalError
+	if !errors.As(err, &internalError) {
+		return NewInternalServerError(internalError.Error())
+	}
 	switch internalError.Err {
 	case "bad_request":
 		return NewBadRequestError(internalError.Error())

@@ -2,39 +2,36 @@ package usecase
 
 import (
 	"context"
-	"fullcycle-auction_go/internal/entity"
+	"fullcycle-auction_go/internal/repository"
 )
 
-func NewUserUseCase(userRepository entity.UserRepositoryInterface) UserUseCaseInterface {
-	return &UserUseCase{
-		userRepository,
+type (
+	userUseCase struct {
+		userRepository repository.UserRepository
 	}
+
+	UserOutputDTO struct {
+		Id   string `json:"id"`
+		Name string `json:"name"`
+	}
+
+	UserUseCase interface {
+		FindUserById(ctx context.Context, id string) (*UserOutputDTO, error)
+	}
+)
+
+func NewUserUseCase(userRepository repository.UserRepository) UserUseCase {
+	return &userUseCase{userRepository: userRepository}
 }
 
-type UserUseCase struct {
-	UserRepository entity.UserRepositoryInterface
-}
-
-type UserOutputDTO struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-}
-
-type UserUseCaseInterface interface {
-	FindUserById(
-		ctx context.Context,
-		id string) (*UserOutputDTO, error)
-}
-
-func (u *UserUseCase) FindUserById(
-	ctx context.Context, id string) (*UserOutputDTO, error) {
-	userEntity, err := u.UserRepository.FindUserById(ctx, id)
+func (u *userUseCase) FindUserById(ctx context.Context, id string) (*UserOutputDTO, error) {
+	user, err := u.userRepository.FindUserById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	return &UserOutputDTO{
-		Id:   userEntity.Id,
-		Name: userEntity.Name,
+		Id:   user.Id,
+		Name: user.Name,
 	}, nil
 }

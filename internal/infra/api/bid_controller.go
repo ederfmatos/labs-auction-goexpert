@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fullcycle-auction_go/configuration/rest_err"
 	"fullcycle-auction_go/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -10,10 +9,10 @@ import (
 )
 
 type BidController struct {
-	bidUseCase usecase.BidUseCaseInterface
+	bidUseCase usecase.BidUseCase
 }
 
-func NewBidController(bidUseCase usecase.BidUseCaseInterface) *BidController {
+func NewBidController(bidUseCase usecase.BidUseCase) *BidController {
 	return &BidController{
 		bidUseCase: bidUseCase,
 	}
@@ -29,7 +28,7 @@ func (u *BidController) CreateBid(c *gin.Context) {
 		return
 	}
 
-	err := u.bidUseCase.CreateBid(context.Background(), bidInputDTO)
+	err := u.bidUseCase.CreateBid(c.Request.Context(), bidInputDTO)
 	if err != nil {
 		restErr := rest_err.ConvertError(err)
 
@@ -53,7 +52,7 @@ func (u *BidController) FindBidByAuctionId(c *gin.Context) {
 		return
 	}
 
-	bidOutputList, err := u.bidUseCase.FindBidByAuctionId(context.Background(), auctionId)
+	bidOutputList, err := u.bidUseCase.FindBidByAuctionId(c.Request.Context(), auctionId)
 	if err != nil {
 		errRest := rest_err.ConvertError(err)
 		c.JSON(errRest.Code, errRest)

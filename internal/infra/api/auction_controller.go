@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"fullcycle-auction_go/configuration/rest_err"
 	"fullcycle-auction_go/internal/usecase"
 	"github.com/gin-gonic/gin"
@@ -11,10 +10,10 @@ import (
 )
 
 type AuctionController struct {
-	auctionUseCase usecase.AuctionUseCaseInterface
+	auctionUseCase usecase.AuctionUseCase
 }
 
-func NewAuctionController(auctionUseCase usecase.AuctionUseCaseInterface) *AuctionController {
+func NewAuctionController(auctionUseCase usecase.AuctionUseCase) *AuctionController {
 	return &AuctionController{
 		auctionUseCase: auctionUseCase,
 	}
@@ -30,7 +29,7 @@ func (u *AuctionController) CreateAuction(c *gin.Context) {
 		return
 	}
 
-	err := u.auctionUseCase.CreateAuction(context.Background(), auctionInputDTO)
+	err := u.auctionUseCase.CreateAuction(c.Request.Context(), auctionInputDTO)
 	if err != nil {
 		restErr := rest_err.ConvertError(err)
 
@@ -54,7 +53,7 @@ func (u *AuctionController) FindAuctionById(c *gin.Context) {
 		return
 	}
 
-	auctionData, err := u.auctionUseCase.FindAuctionById(context.Background(), auctionId)
+	auctionData, err := u.auctionUseCase.FindAuctionById(c.Request.Context(), auctionId)
 	if err != nil {
 		errRest := rest_err.ConvertError(err)
 		c.JSON(errRest.Code, errRest)
@@ -77,7 +76,7 @@ func (u *AuctionController) FindAuctions(c *gin.Context) {
 	}
 
 	auctions, err := u.auctionUseCase.FindAuctions(
-		context.Background(),
+		c.Request.Context(),
 		usecase.AuctionStatus(statusNumber),
 		category,
 		productName,
@@ -104,7 +103,7 @@ func (u *AuctionController) FindWinningBidByAuctionId(c *gin.Context) {
 		return
 	}
 
-	auctionData, err := u.auctionUseCase.FindWinningBidByAuctionId(context.Background(), auctionId)
+	auctionData, err := u.auctionUseCase.FindWinningBidByAuctionId(c.Request.Context(), auctionId)
 	if err != nil {
 		errRest := rest_err.ConvertError(err)
 		c.JSON(errRest.Code, errRest)
