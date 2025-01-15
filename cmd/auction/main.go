@@ -1,30 +1,29 @@
 package main
 
 import (
-	"context"
 	"fullcycle-auction_go/configuration/database/mongodb"
 	"fullcycle-auction_go/internal/infra/api"
 	"fullcycle-auction_go/internal/infra/database"
 	"fullcycle-auction_go/internal/usecase"
 	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 )
 
 func main() {
-	ctx := context.Background()
-
-	if err := godotenv.Load("cmd/auction/.env"); err != nil {
-		log.Fatal("Error trying to load env variables")
-		return
-	}
-
-	databaseConnection, err := mongodb.NewMongoDBConnection(ctx)
+	databaseConnection, err := mongodb.NewMongoDBConnection()
 	if err != nil {
 		log.Fatal(err.Error())
 		return
 	}
 
+	router := makeRouter(databaseConnection)
+	if err = router.Run(":8080"); err != nil {
+		log.Fatalf("Error trying to start server: %s", err.Error())
+	}
+}
+
+func makeRouter(databaseConnection *mongo.Database) *gin.Engine {
 	router := gin.Default()
 
 	auctionRepository := database.NewAuctionRepository(databaseConnection)
@@ -43,5 +42,5 @@ func main() {
 	router.GET("/bid/:auctionId", bidController.FindBidByAuctionId)
 	router.GET("/user/:userId", userController.FindUserById)
 
-	router.Run(":8080")
+	return router
 }

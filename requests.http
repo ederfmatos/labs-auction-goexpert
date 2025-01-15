@@ -1,0 +1,15 @@
+### List Auctions
+GET http://localhost:8080/auction?status=0
+
+---
+
+### Save Auction
+POST http://localhost:8080/auction
+Content-Type: application/json
+
+{
+  "product_name": "Product Test",
+  "category": "Category Test",
+  "description": "Description Test",
+  "condition": 1
+}

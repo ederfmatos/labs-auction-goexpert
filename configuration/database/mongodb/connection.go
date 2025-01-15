@@ -13,17 +13,17 @@ const (
 	_mongoDBDatabase = "MONGODB_DB"
 )
 
-func NewMongoDBConnection(ctx context.Context) (*mongo.Database, error) {
+func NewMongoDBConnection() (*mongo.Database, error) {
 	mongoURL := os.Getenv(_mongoDBURL)
 	mongoDatabase := os.Getenv(_mongoDBDatabase)
 
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(mongoURL))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI(mongoURL))
 	if err != nil {
 		logger.Error("Error trying to connect to mongodb database", err)
 		return nil, err
 	}
 
-	if err = client.Ping(ctx, nil); err != nil {
+	if err = client.Ping(context.Background(), nil); err != nil {
 		logger.Error("Error trying to ping mongodb database", err)
 		return nil, err
 	}

@@ -47,9 +47,7 @@ func NewBidRepository(database *mongo.Database, auctionRepository *AuctionReposi
 	}
 }
 
-func (bd *BidRepository) CreateBid(
-	ctx context.Context,
-	bidEntities []entity.Bid) error {
+func (bd *BidRepository) CreateBid(ctx context.Context, bidEntities []entity.Bid) error {
 	var wg sync.WaitGroup
 	for _, bid := range bidEntities {
 		wg.Add(1)
